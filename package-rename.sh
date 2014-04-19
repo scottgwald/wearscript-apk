@@ -1,5 +1,9 @@
 #! /bin/bash
 
+# author: Scott Greenwald (github.com/scottgwald) 
+# project: WearScript
+# license: Apache 2.0 
+
 # first arg is name of apk
 # second arg is new trigger phrase
 #
