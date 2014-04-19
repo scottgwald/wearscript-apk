@@ -32,10 +32,9 @@ apktool d -f $name
 # replace string "wear a script" with $2 second commandline argument
 pathToXml=$truncatedName/res/values/strings.xml
 tmp="tmp.xml"
-export sedCmd="sed 's/wear a script/"$2"/g' "$pathToXml" > "$tmp
+export sedCmd="sed -i .back 's/wear a script/"$2"/g' "$pathToXml
 eval $sedCmd
-cp $tmp $pathToXml
-rm $tmp
+rm $pathToXml.back
 
 # repack
 apktool b $truncatedName
@@ -59,6 +58,6 @@ cp $pathToNewApk $name
 # UNINSTALL DIFFERENTLY-SIGNED APK, INSTALL NEW ONE
 #
 adb uninstall com.dappervision.wearscript
-adb install $name
+adb install -r $name
 
 echo `which aapt`
