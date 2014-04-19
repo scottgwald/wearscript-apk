@@ -8,7 +8,7 @@
 # second arg is new trigger phrase
 #
 # REQUIRES:
-#  apktool
+#  jar
 #    aapt
 #  jarsigner
 #  keystore file: debug.keystore
@@ -28,8 +28,8 @@ fi
 #
 # UNPACK AND THEN REPACK
 #
-
-apktool d -f $1
+export SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
+java -jar $SCRIPTPATH/libs/apktool-cli.jar d -f $1
 
 #
 # CHANGE TRIGGER PHRASE
@@ -68,7 +68,7 @@ mv $truncatedName/smali/com/dappervision $truncatedName/smali/com/$newPackageSeg
 
 #
 # repack
-apktool b $truncatedName
+java -jar $SCRIPTPATH/libs/apktool-cli.jar b $truncatedName
 
 #
 # VERIFY THE FILE WAS THERE AND IS NEW 
@@ -83,7 +83,6 @@ echo `ls -l $pathToNewApk`
 
 # debug.keystore is file, assumed to be in current directory
 export newName=$truncatedName-renamed.apk
-export SCRIPTPATH=$( cd $(dirname $0) ; pwd -P )
 
 jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $SCRIPTPATH/debug.keystore $pathToNewApk android
 cp $pathToNewApk $newName
