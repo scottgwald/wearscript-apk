@@ -45,7 +45,8 @@ rm $pathToXml.back
 #
 # CHANGE PACKAGE NAME IN MANIFEST
 #
-export sedCmd="sed -i .back 's/dappervision/"$3"/g' "$truncatedName"/AndroidManifest.xml"
+export newPackageSegment=dappervision_$3
+export sedCmd="sed -i .back 's/dappervision/"$newPackageSegment"/g' "$truncatedName"/AndroidManifest.xml"
 echo $sedCmd
 eval $sedCmd
 
@@ -54,7 +55,7 @@ eval $sedCmd
 #
 
 # replace instances of "dappervision" with new string
-export replaceCmd="find . -iname '*.smali' | xargs sed -i .back 's/dappervision/"$3"/g'" 
+export replaceCmd="find . -iname '*.smali' | xargs sed -i .back 's/dappervision/"$newPackageSegment"/g'" 
 eval $replaceCmd
 # remove sed's backup files
 find $truncatedName -iname '*.back' | xargs rm
@@ -63,7 +64,7 @@ find $truncatedName -iname '*.back' | xargs rm
 # MOVE FOLDER IN SMALI DIRECTORY TREE
 #
 
-mv $truncatedName/smali/com/dappervision $truncatedName/smali/com/$3
+mv $truncatedName/smali/com/dappervision $truncatedName/smali/com/$newPackageSegment
 
 #
 # repack
