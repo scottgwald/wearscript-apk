@@ -35,7 +35,7 @@ def sign(path):
 
 def replace_trigger(path, trigger):
     xml_path = path + '/res/values/strings.xml'
-    xml_data = open(xml_path).read().replace('wear a script', trigger)
+    xml_data = open(xml_path).read().replace('wear a script', trigger).replace('>WearScript<', '>WearScript(%s)<' % trigger)
     open(xml_path, 'w').write(xml_data)
 
 def replace_manifest_package(path, gist):
