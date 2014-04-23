@@ -2,7 +2,6 @@ import argparse
 import os
 import subprocess
 import shutil
-import pexpect
 
 
 def remove_old(path):
@@ -30,8 +29,6 @@ def sign(path):
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
-    # TODO: Use pexpect and use password of asdfasdf
-
 
 def replace_trigger(path, trigger):
     xml_path = path + '/res/values/strings.xml'
