@@ -2,7 +2,14 @@ import argparse
 import os
 import subprocess
 import shutil
+import pexpect
 
+
+def remove_old(path):
+    try:
+        shutil.rmtree(path)
+    except OSError:
+        pass
 
 def unpack(apk):
     p = subprocess.Popen(['java', '-jar', 'libs/apktool-cli.jar', 'd', '-f', apk])
@@ -17,9 +24,8 @@ def repack(path):
         raise RuntimeError('An error occurred, note that this requires Java 7')
 
 def sign(path):
-    apk_repacked_path = path.rsplit('/', 1)[1] + '/dist/' + path.rsplit('/', 1)[1] + '.apk'
-    args = ['jarsigner', '-verbose', '-sigalg', 'SHA1withRSA', '-digestalg', 'SHA1', '-keystore', 'debug.keystore', apk_repacked_path, 'android']
-    print(args)
+    apk_repacked_path = path + '/dist/' + path.rsplit('/', 1)[1] + '.apk'
+    args = ['jarsigner', '-verbose', '-sigalg', 'SHA1withRSA', '-digestalg', 'SHA1', '-storepass', 'asdfasdf', '-keystore', 'debug.keystore', apk_repacked_path, 'android']
     p = subprocess.Popen(args)
     r = p.wait()
     if r:
@@ -46,7 +52,7 @@ def replace_smali_files(path, gist):
         if root.find('/dappervision/') != -1:
             for file in files:
                 file = os.path.join(root, file)
-                data = open(file).read().replace('.dappervision.', '.dappervision_%s.' % gist)
+                data = open(file).read().replace('/dappervision/', '/dappervision_%s/' % gist)
                 open(file, 'w').write(data)
     shutil.move(path + '/smali/com/dappervision', path + '/smali/com/dappervision_%s' % gist)
 
@@ -66,16 +72,17 @@ def main():
     parser.add_argument('--boot', action='store_true')
     args = parser.parse_args()
     apk = os.path.abspath(args.apk)
-    path = apk.rsplit('.', 1)[0]
+    path = os.path.abspath(apk.rsplit('.', 1)[0])
     gist = args.gist
-    #unpack(apk)
+    remove_old(path)
+    unpack(apk)
     if args.trigger:
         replace_trigger(path, args.trigger)
     replace_manifest_package(path, gist)
     replace_smali_files(path, gist)
     if args.boot:
         boot_permission(path)
-    #repack(path)
+    repack(path)
     sign(path)
 
 if __name__ == '__main__':
