@@ -1,7 +1,11 @@
+#! /usr/local/bin/python
+
 import argparse
 import os
 import subprocess
 import shutil
+import urllib2
+import json
 
 
 def remove_old(path):
@@ -61,12 +65,31 @@ def boot_permission(path):
     manifest_data = manifest_data.replace(boot_perm, '').replace(dev_perm, dev_perm + boot_perm)
     open(manifest_path, 'w').write(manifest_data)
 
+def gist_url(gistId):
+    return "https://api.github.com/gists/%s" % gistId
+
+# TODO: check if get_gist succeeds
+def get_gist(gistId, dest_dir):
+    response = urllib2.urlopen(gist_url(gistId))
+    text = response.read()
+    gistInfo = json.loads(text)
+    cwd = os.getcwd();
+    newDir = os.path.join(cwd, dest_dir, gistId)
+    if not os.path.exists(newDir): os.makedirs(newDir)
+    for file in gistInfo['files'].keys():
+        fileContents = urllib2.urlopen(gistInfo['files'][file]['raw_url'])
+        with open(os.path.join(newDir,file), 'w') as f:
+            print "Writing %s" % os.path.join(newDir,file)
+            f.write(fileContents.read())
+
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('apk')
     parser.add_argument('--trigger')
     parser.add_argument('gist')
     parser.add_argument('--boot', action='store_true')
+    parser.add_argument('--package', action='store_true')
+    parser.add_argument('--include_gist', action='store_true')
     args = parser.parse_args()
     apk = os.path.abspath(args.apk)
     path = os.path.abspath(apk.rsplit('.', 1)[0])
@@ -79,6 +102,13 @@ def main():
     replace_smali_files(path, gist)
     if args.boot:
         boot_permission(path)
+    if args.include_gist:
+        print "Calling get_gist"
+        get_gist(gist, os.path.join(path, 'assets'))
+    else:
+        print "Not calling get_gist"
+    print 'package...345345'
+    print args.package
     repack(path)
     sign(path)
 
