@@ -7,6 +7,8 @@ import shutil
 import urllib2
 import json
 
+scriptpath = os.path.dirname(os.path.realpath(__file__))
+apktool_path = os.path.join(scriptpath, 'libs', 'apktool-cli.jar')
 
 def remove_old(path):
     try:
@@ -15,20 +17,20 @@ def remove_old(path):
         pass
 
 def unpack(apk):
-    p = subprocess.Popen(['java', '-jar', 'libs/apktool-cli.jar', 'd', '-f', apk])
+    p = subprocess.Popen(['java', '-jar', apktool_path, 'd', '-f', apk])
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
 
 def repack(path):
-    p = subprocess.Popen(['java', '-jar', 'libs/apktool-cli.jar', 'b', path])
+    p = subprocess.Popen(['java', '-jar', apktool_path, 'b', path])
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
 
 def sign(path):
     apk_repacked_path = path + '/dist/' + path.rsplit('/', 1)[1] + '.apk'
-    args = ['jarsigner', '-verbose', '-sigalg', 'SHA1withRSA', '-digestalg', 'SHA1', '-storepass', 'asdfasdf', '-keystore', 'debug.keystore', apk_repacked_path, 'android']
+    args = ['jarsigner', '-verbose', '-sigalg', 'SHA1withRSA', '-digestalg', 'SHA1', '-storepass', 'asdfasdf', '-keystore', os.path.join(scriptpath,'debug.keystore'), apk_repacked_path, 'android']
     p = subprocess.Popen(args)
     r = p.wait()
     if r:
@@ -53,7 +55,7 @@ def replace_smali_files(path, gist):
         if root.find('/dappervision/') != -1:
             for file in files:
                 file = os.path.join(root, file)
-                data = open(file).read().replace('/dappervision/', '/dappervision_%s/' % gist)
+                data = open(file).read().replace('dappervision', 'dappervision_%s' % gist)
                 open(file, 'w').write(data)
     shutil.move(path + '/smali/com/dappervision', path + '/smali/com/dappervision_%s' % gist)
 
