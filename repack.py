@@ -17,21 +17,24 @@ def remove_old(path):
         pass
 
 def unpack(apk):
+    print "Unpacking."
     p = subprocess.Popen(['java', '-jar', apktool_path, 'd', '-f', apk])
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
 
 def repack(path):
+    print "Repacking"
     p = subprocess.Popen(['java', '-jar', apktool_path, 'b', path])
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
 
 def sign(path):
+    print "Signing"
     apk_repacked_path = path + '/dist/' + path.rsplit('/', 1)[1] + '.apk'
     args = ['jarsigner', '-verbose', '-sigalg', 'SHA1withRSA', '-digestalg', 'SHA1', '-storepass', 'asdfasdf', '-keystore', os.path.join(scriptpath,'debug.keystore'), apk_repacked_path, 'android']
-    p = subprocess.Popen(args)
+    p = subprocess.Popen(args, stdout=DEVNULL)
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
@@ -85,13 +88,13 @@ def get_gist(gistId, dest_dir):
             f.write(fileContents.read())
 
 def main():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Package a gist into a self-contained apk.')
     parser.add_argument('apk')
     parser.add_argument('--trigger')
     parser.add_argument('gist')
     parser.add_argument('--boot', action='store_true')
-    parser.add_argument('--package', action='store_true')
-    parser.add_argument('--include_gist', action='store_true')
+    parser.add_argument('--no_package_name_change', action='store_true')
+    parser.add_argument('--exclude_gist', action='store_true', help='Do not include gist files in package')
     args = parser.parse_args()
     apk = os.path.abspath(args.apk)
     path = os.path.abspath(apk.rsplit('.', 1)[0])
@@ -99,18 +102,19 @@ def main():
     remove_old(path)
     unpack(apk)
     if args.trigger:
+        print "Using trigger phrase " + args.trigger
         replace_trigger(path, args.trigger)
-    replace_manifest_package(path, gist)
-    replace_smali_files(path, gist)
+    if not args.no_package_name_change:
+        print "Changing package name to com.dappervision_%s.wearscript" % gist
+        replace_manifest_package(path, gist)
+        replace_smali_files(path, gist)
     if args.boot:
         boot_permission(path)
-    if args.include_gist:
+    if not args.exclude_gist:
         print "Calling get_gist"
         get_gist(gist, os.path.join(path, 'assets'))
     else:
         print "Not calling get_gist"
-    print 'package...345345'
-    print args.package
     repack(path)
     sign(path)
 
