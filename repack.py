@@ -7,6 +7,9 @@ import shutil
 import urllib2
 import json
 
+DEVNULL = open(os.devnull, 'wb')
+log_outfile_name = "repack.log"
+LOG_OUTFILE = open(log_outfile_name, 'wb')
 scriptpath = os.path.dirname(os.path.realpath(__file__))
 apktool_path = os.path.join(scriptpath, 'libs', 'apktool-cli.jar')
 
@@ -18,14 +21,14 @@ def remove_old(path):
 
 def unpack(apk):
     print "Unpacking."
-    p = subprocess.Popen(['java', '-jar', apktool_path, 'd', '-f', apk])
+    p = subprocess.Popen(['java', '-jar', apktool_path, 'd', '-f', apk], stdout=LOG_OUTFILE)
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
 
 def repack(path):
     print "Repacking"
-    p = subprocess.Popen(['java', '-jar', apktool_path, 'b', path])
+    p = subprocess.Popen(['java', '-jar', apktool_path, 'b', path], stdout=LOG_OUTFILE)
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
@@ -34,10 +37,11 @@ def sign(path):
     print "Signing"
     apk_repacked_path = path + '/dist/' + path.rsplit('/', 1)[1] + '.apk'
     args = ['jarsigner', '-verbose', '-sigalg', 'SHA1withRSA', '-digestalg', 'SHA1', '-storepass', 'asdfasdf', '-keystore', os.path.join(scriptpath,'debug.keystore'), apk_repacked_path, 'android']
-    p = subprocess.Popen(args, stdout=DEVNULL)
+    p = subprocess.Popen(args, stdout=LOG_OUTFILE)
     r = p.wait()
     if r:
         raise RuntimeError('An error occurred, note that this requires Java 7')
+    print "Wrote " + apk_repacked_path
 
 def replace_trigger(path, trigger):
     xml_path = path + '/res/values/strings.xml'
@@ -100,9 +104,10 @@ def main():
     path = os.path.abspath(apk.rsplit('.', 1)[0])
     gist = args.gist
     remove_old(path)
+    print "For detailed output see logfile " + log_outfile_name
     unpack(apk)
     if args.trigger:
-        print "Using trigger phrase " + args.trigger
+        print "Using trigger phrase '%s'" % args.trigger
         replace_trigger(path, args.trigger)
     if not args.no_package_name_change:
         print "Changing package name to com.dappervision_%s.wearscript" % gist
@@ -117,6 +122,7 @@ def main():
         print "Not calling get_gist"
     repack(path)
     sign(path)
+    LOG_OUTFILE.close()
 
 if __name__ == '__main__':
     main()
