@@ -1,8 +1,12 @@
 wearscript-apk
 ==============
 
-repackage wearscript apk with new package name and trigger phrase
+Package your gist as a standalone apk with its own trigger phrase.
 
-# To run
+Basic usage
 
-`package-rename.sh <APKNAME> <NEW TRIGGER PHRASE> <CUSTOM PACKAGE NAME>`
+    repack <apk> <gistId> --trigger <trigger>
+
+For more details, try `repack --help`. Note that this only works
+if your gist is public.
+
